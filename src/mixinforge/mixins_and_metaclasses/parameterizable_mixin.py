@@ -10,8 +10,10 @@ and for converting the parameters to and from a portable dictionary
 (a dictionary with sorted str keys that only contains
 basic types and portable sub-dictionaries).
 """
+
 import inspect
-from typing import Any
+from copy import copy, deepcopy
+from typing import Any, Self
 
 from ..utility_functions.dict_sorter import sort_dict_by_keys
 from ..utility_functions.json_processor import dumpjs, JsonSerializedObject
@@ -49,6 +51,18 @@ class ParameterizableMixin:
         params = dict()
         return params
 
+    def clone(self, **kwargs: Any) -> Self:
+        """Create a new instance with the same parameters, optionally overriding some.
+    
+        Args:
+            **kwargs: Parameter overrides to apply to the clone.
+        
+        Returns:
+            A new instance with parameters from this instance, updated with kwargs.
+        """
+        params = deepcopy(self.get_params())
+        params.update(deepcopy(kwargs))
+        return type(self)(**params)
 
     def _extend_parent_params(self, **new_params: Any) -> dict[str, Any]:
         """Extend parent parameters with keyword overrides."""

@@ -171,3 +171,61 @@ def test_extend_parent_params_grandchild_get_params_use_case():
     obj = ClassB(a=10, b=20)
     params = obj.get_params()
     assert params == {"a": 10, "b": 20}
+
+
+def test_clone_creates_new_instance_and_deepcopies_params():
+    class ListParam(ParameterizableMixin):
+        def __init__(self, items: list[int], other: int = 0) -> None:
+            self.items = items
+            self.other = other
+
+        def get_params(self) -> dict[str, Any]:
+            return {"items": self.items, "other": self.other}
+
+    original = ListParam(items=[1, 2, 3], other=10)
+    cloned = original.clone()
+
+    assert cloned is not original
+    assert cloned.items == [1, 2, 3]
+    assert cloned.items is not original.items  # deepcopy prevents shared mutable state
+
+    # Test override
+    cloned_override = original.clone(other=20)
+    assert cloned_override.items == [1, 2, 3]
+    assert cloned_override.items is not original.items
+    assert cloned_override.other == 20
+
+
+def test_clone_with_nested_mutable_kwargs():
+    class DictParam(ParameterizableMixin):
+        def __init__(self, config: dict[str, Any]) -> None:
+            self.config = config
+
+        def get_params(self) -> dict[str, Any]:
+            return {"config": self.config}
+
+    original = DictParam(config={"a": 1})
+
+    # Clone with a mutable kwarg
+    new_config = {"a": 2, "b": [1, 2, 3]}
+    cloned = original.clone(config=new_config)
+
+    assert cloned.config == {"a": 2, "b": [1, 2, 3]}
+    assert cloned.config is not new_config  # Should be a deepcopy
+    assert cloned.config["b"] is not new_config["b"]
+
+
+def test_clone_with_invalid_params_raises_error():
+    import pytest
+
+    class SimpleParam(ParameterizableMixin):
+        def __init__(self, a: int) -> None:
+            self.a = a
+
+        def get_params(self) -> dict[str, Any]:
+            return {"a": self.a}
+
+    original = SimpleParam(a=1)
+
+    with pytest.raises(TypeError):
+        original.clone(invalid_param=42)
