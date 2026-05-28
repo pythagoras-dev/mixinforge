@@ -12,7 +12,7 @@ basic types and portable sub-dictionaries).
 """
 
 import inspect
-from copy import copy, deepcopy
+from copy import deepcopy
 from typing import Any, Self
 
 from ..utility_functions.dict_sorter import sort_dict_by_keys
